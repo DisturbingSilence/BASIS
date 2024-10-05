@@ -93,12 +93,40 @@ Pipeline::Pipeline(Pipeline&& other) noexcept
 {
 	m_id = std::exchange(other.m_id,0);
 }
-
 Pipeline& Pipeline::operator=(Pipeline&& other) noexcept
 {
 	if(&other == this) return *this;
 	
 	m_id = std::exchange(other.m_id,0);
 	return *this;
+}
+
+ComputePipeline::ComputePipeline(const Shader& computeShader,std::string_view name)
+{
+	m_id = glCreateProgram();
+	glObjectLabel(GL_PROGRAM,m_id,name.size(),name.data());
+	glAttachShader(m_id,computeShader.id());
+	
+	std::string log;
+	if(!link(m_id,log))
+	{
+		glDeleteProgram(m_id);
+		throw PipelineException("[LINKING FAILURE]\n",name,"\n",log);
+	}
+}
+ComputePipeline::ComputePipeline(ComputePipeline&& other) noexcept
+{
+	m_id =  std::exchange(other.m_id,0);
+}
+ComputePipeline& ComputePipeline::operator=(ComputePipeline&& other) noexcept
+{
+	if(&other == this) return *this;
+	
+	m_id = std::exchange(other.m_id,0);
+	return *this;
+}
+ComputePipeline::~ComputePipeline()
+{
+	if(m_id) glDeleteProgram(m_id);
 }
 };

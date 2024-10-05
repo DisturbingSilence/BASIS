@@ -20,13 +20,17 @@ namespace BASIS
 struct Renderer
 {
 	std::unique_ptr<RenderingContext> context = std::make_unique<RenderingContext>();
-	void BeginFrame();
-	void EndFrame();
+	void beginFrame();
+	void endFrame();
+	void beginCompute();
+	void endCompute();
+
 	
 	// remove this later and give user ability to interpret model data however he wants
 	void drawModel(const std::shared_ptr<GLTFModel>& model);
 	
 	void bindPipeline(const Pipeline& pipeline);
+	void bindComputePipeline(const ComputePipeline& pipe);
 	void bindIndexBuffer(const Buffer& buffer,IndexType type = IndexType::UINT);
 	
 	void bindVertexBuffer(

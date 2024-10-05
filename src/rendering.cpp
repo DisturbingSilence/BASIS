@@ -70,26 +70,26 @@ void Renderer::bindPipeline(const Pipeline& pipe)
 	assert(context->isRendering);
 	assert(pipe.id() && "Can't bind uninitialized pipeline");
 	
-	const auto& inf = pipe.m_info;
-	if(context->lastBoundPipeline != pipe.m_id || context->lastPipelineWasCompute)
-	{
-		glUseProgram(pipe.id());
-	}
-	else
-	{
-		return;
-	}
-	/*if (!lastGraphicsPipeline || ias.primitiveRestartEnable != lastGraphicsPipeline->inputAssemblyState.primitiveRestartEnable)
-      {
-        GLEnableOrDisable(GL_PRIMITIVE_RESTART_FIXED_INDEX, ias.primitiveRestartEnable);
-      }*/
-	context->lastPipelineWasCompute = false;
-	context->primitiveMode = inf.assemblyState.mode;
+	const auto& inf = pipe.info();
+	if(context->lastBoundPipeline == pipe.id()) return;
+	
+	glUseProgram(pipe.id());
+	
+	context->primitiveMode = inf.mode;
 	if(auto newVao = getVAO(inf.vertexState);newVao != context->vao)
 	{
 		context->vao = newVao;
 		glBindVertexArray(newVao);
 	}
+}
+void Renderer::bindComputePipeline(const ComputePipeline& pipe)
+{
+	assert(context->isComputeActive);
+	assert(pipe.id());
+
+	if(context->lastBoundPipeline == pipe.id()) return;
+	glUseProgram(pipe.id());
+
 }
 void Renderer::bindIndexBuffer(const Buffer& buf,IndexType type)
 {
@@ -103,12 +103,12 @@ void Renderer::bindVertexBuffer(const Buffer& buf, uint32_t bindPoint,uint64_t s
 	assert(context->isRendering);
 	glVertexArrayVertexBuffer(context->vao, bindPoint, buf.id(), offs, stride);
 }
-void Renderer::BeginFrame()
+void Renderer::beginFrame()
 {
 	assert(!context->isRendering && "Cannot call BeginFrame() twice");
 	context->isRendering = true;
 }
-void Renderer::EndFrame()
+void Renderer::endFrame()
 {
 	assert(context->isRendering && "Cannot call EndFrame() without rendering");
 	context->isRendering = false;
@@ -188,7 +188,7 @@ void Renderer::drawIndexedIndirect(
 	std::uint64_t commandBufferOffset)
 {
 	assert(context->isRendering);
-	assert(context->isIdxBufferBound);
+	assert(context->isIndexBufferBound);
 
 	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, commandBuffer.id());
 	glMultiDrawElementsIndirect(enumToGL(context->primitiveMode),
@@ -206,7 +206,7 @@ void Renderer::drawIndexedIndirectCount(
 	std::uint64_t countBufferOffset)
 {
 	assert(context->isRendering);
-	assert(context->isIdxBufferBound);
+	assert(context->isIndexBufferBound);
 
 	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, commandBuffer.id());
 	glBindBuffer(GL_PARAMETER_BUFFER, countBuffer.id());
@@ -243,6 +243,20 @@ void Renderer::frontFace(FrontFaceMode mode)
 {
 	glFrontFace(static_cast<std::uint32_t>(mode));
 }
+void Renderer::beginCompute()
+{
+	assert(!context->isComputeActive);
+	assert(!context->isRendering);
+
+	context->isComputeActive = true;
+}
+void Renderer::endCompute()
+{
+	assert(context->isComputeActive);
+	context->isComputeActive = false;
+}
+
+
 void Renderer::setUniform(uint8_t size,int32_t location,size_t count,const int32_t* value)
 {
 	switch(size)

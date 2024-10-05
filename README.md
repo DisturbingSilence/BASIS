@@ -9,4 +9,5 @@ Adapting [Fwog](https://github.com/JuanDiegoMontoya/Fwog) for personal needs in 
  - [ ] Async asset loading
  - [ ] Meshlets
  - [ ] Automatic glad pulling(?)
- - [ ] Compute shaders
+ - [x] Compute shaders
+ - [ ] KTX2  

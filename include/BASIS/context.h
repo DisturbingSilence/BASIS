@@ -92,6 +92,7 @@ struct RenderingContext
 	DeviceProperties properties;
 	
 	bool isRendering{false};
+	bool isComputeActive{false};
 	bool isIdxBufferBound{false};
 	bool lastPipelineWasCompute{false};
 	

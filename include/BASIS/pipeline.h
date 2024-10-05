@@ -24,17 +24,11 @@ struct VertexBinding
 	std::uint32_t 	offset{};
 	Format			fmt{};
 };
-
-struct InputAssemblyState
-{
-	PrimitiveMode mode = PrimitiveMode::TRIANGLES;
-	bool primitiveRestartEnable = false;
-};
 using VertexInputState = std::vector<VertexBinding>;
 
 struct PipelineInfo
 {
-	InputAssemblyState assemblyState{};
+	PrimitiveMode mode{PrimitiveMode::TRIANGLES};
 	std::vector<VertexBinding> vertexState{};
 };
 struct PipelineCreateInfo : public PipelineInfo
@@ -52,9 +46,18 @@ struct Pipeline : public BaseClass
 	Pipeline(Pipeline&&) noexcept;
 	Pipeline& operator=(Pipeline&&) noexcept;
 	
+	const PipelineInfo& info() const noexcept { return m_info; }
 	private:
 	PipelineInfo m_info{};
-	friend class Renderer;
+};
+struct ComputePipeline : public BaseClass
+{
+	explicit ComputePipeline(const Shader& computeShader,std::string_view name="");
+	~ComputePipeline();
+	
+	ComputePipeline(ComputePipeline&&) noexcept;
+	ComputePipeline& operator=(ComputePipeline&&) noexcept;
+	
 };
 	
 	
