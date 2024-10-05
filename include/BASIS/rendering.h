@@ -24,10 +24,6 @@ struct Renderer
 	void endFrame();
 	void beginCompute();
 	void endCompute();
-
-	
-	// remove this later and give user ability to interpret model data however he wants
-	void drawModel(const std::shared_ptr<GLTFModel>& model);
 	
 	void bindPipeline(const Pipeline& pipeline);
 	void bindComputePipeline(const ComputePipeline& pipe);

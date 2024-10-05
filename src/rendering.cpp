@@ -9,9 +9,9 @@
 #include <glad/gl.h>
 
 
-static size_t hashVAO(const BASIS::VertexInputState& state)
+static std::size_t hashVAO(const BASIS::VertexInputState& state)
 {
-	size_t totalHash{};
+	std::size_t totalHash{};
 	std::for_each(state.begin(),state.end(),
 	[&](const auto& cur)
 	{
@@ -21,13 +21,13 @@ static size_t hashVAO(const BASIS::VertexInputState& state)
 	});
 	return totalHash;
 }
-std::unordered_map<size_t,uint32_t> vaoCache;
-static uint32_t getVAO(const BASIS::VertexInputState& state)
+std::unordered_map<std::size_t,std::uint32_t> vaoCache;
+static std::uint32_t getVAO(const BASIS::VertexInputState& state)
 {
 	auto vao_hash = hashVAO(state);
 	if(auto it = vaoCache.find(vao_hash);it != vaoCache.end()) return it->second;
 	
-	uint32_t id{};
+	std::uint32_t id{};
 	glCreateVertexArrays(1, &id);
 	std::for_each(state.begin(),state.end(),
 	[&](const auto& cur)
@@ -45,21 +45,21 @@ static uint32_t getVAO(const BASIS::VertexInputState& state)
 namespace BASIS
 {
 	
-void Renderer::bindUniformBuffer(const Buffer& buf,uint32_t idx,uint64_t size,uint64_t offs)
+void Renderer::bindUniformBuffer(const Buffer& buf,std::uint32_t idx,std::uint64_t size,std::uint64_t offs)
 {
 	assert(context->isRendering);
 	glBindBufferRange(GL_UNIFORM_BUFFER, idx, 
 	buf.id(), offs, 
 	size == WHOLE_BUFFER ? buf.size() - offs : size);
 }
-void Renderer::bindStorageBuffer(const Buffer& buf,uint32_t idx,uint64_t size, uint64_t offs)
+void Renderer::bindStorageBuffer(const Buffer& buf,std::uint32_t idx,std::uint64_t size,std::uint64_t offs)
 {
 	assert(context->isRendering);
 	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, idx, 
 	buf.id(), offs, 
 	size == WHOLE_BUFFER ? buf.size() - offs : size);
 }
-void Renderer::bindSampledImage(uint32_t index, const Texture& texture, const Sampler& sampler)
+void Renderer::bindSampledImage(std::uint32_t index, const Texture& texture, const Sampler& sampler)
 {
 	assert(context->isRendering);
 	glBindTextureUnit(index, texture.id());
@@ -98,7 +98,7 @@ void Renderer::bindIndexBuffer(const Buffer& buf,IndexType type)
 	context->idxType = type;
 	glVertexArrayElementBuffer(context->vao, buf.id());
 }
-void Renderer::bindVertexBuffer(const Buffer& buf, uint32_t bindPoint,uint64_t stride,uint64_t offs)
+void Renderer::bindVertexBuffer(const Buffer& buf,std::uint32_t bindPoint,std::uint64_t stride,std::uint64_t offs)
 {
 	assert(context->isRendering);
 	glVertexArrayVertexBuffer(context->vao, bindPoint, buf.id(), offs, stride);
@@ -143,11 +143,11 @@ void Renderer::drawIndirect(
 	stride);
 }
 void Renderer::drawIndexed(
-	uint32_t idxCount,
-	uint32_t idxOffset,
-	int32_t  vertOffset,
-	uint32_t instanceCount,
-	uint32_t firstInstance)
+	std::uint32_t idxCount,
+	std::uint32_t idxOffset,
+	std::int32_t  vertOffset,
+	std::uint32_t instanceCount,
+	std::uint32_t firstInstance)
 {
 	assert(context->isRendering);
 	assert(context->isIdxBufferBound);
@@ -257,7 +257,7 @@ void Renderer::endCompute()
 }
 
 
-void Renderer::setUniform(uint8_t size,int32_t location,size_t count,const int32_t* value)
+void Renderer::setUniform(std::uint8_t size,std::int32_t location,std::size_t count,const std::int32_t* value)
 {
 	switch(size)
 	{
@@ -278,7 +278,7 @@ void Renderer::setUniform(uint8_t size,int32_t location,size_t count,const int32
 			break;
 	};
 }
-void Renderer::setUniform(uint8_t size,int32_t location,size_t count,const uint32_t* value)
+void Renderer::setUniform(std::uint8_t size,std::int32_t location,std::size_t count,const std::uint32_t* value)
 {
 	switch(size)
 	{
@@ -299,7 +299,7 @@ void Renderer::setUniform(uint8_t size,int32_t location,size_t count,const uint3
 			break;
 	};
 }
-void Renderer::setUniform(FloatUniform type,int32_t location,size_t count,const float* value,bool transpose)
+void Renderer::setUniform(FloatUniform type,std::int32_t location,std::size_t count,const float* value,bool transpose)
 {
 	using enum FloatUniform;
 	switch(type)
@@ -346,38 +346,6 @@ void Renderer::setUniform(FloatUniform type,int32_t location,size_t count,const 
 		default:
 			assert("invalid float uniform size type");
 	
-	}
-}
-static void drawNode(Renderer& rnd,const std::shared_ptr<GLTFModel>& model,const Node& node)
-{
-	if (node.mesh.primitives.size() > 0) 
-	{
-		glm::mat4 nodeMatrix = node.matrix;
-		std::int32_t currentParent = node.parent; 
-		
-		while (currentParent != -1) 
-		{
-			nodeMatrix =  model->nodes[currentParent].matrix * nodeMatrix;
-			currentParent = model->nodes[currentParent].parent;
-		}
-		Renderer::setUniform(BASIS::FloatUniform::mat4,1,1,&nodeMatrix[0][0]);
-		for (const Primitive& prim : node.mesh.primitives) 
-		{
-			Renderer::setUniform(1,2,1,&prim.materialIdx);
-			rnd.drawIndexed(prim.idxCount,prim.firstIdx);
-		}
-	}
-	for (const auto& child : node.children) drawNode(rnd,model, model->nodes[child]);
-	
-}
-void Renderer::drawModel(const std::shared_ptr<GLTFModel>& model)
-{
-	bindIndexBuffer(*model->idxBuffer);
-    Renderer::bindStorageBuffer(*model->materialBuffer,0);
-    Renderer::bindVertexBuffer(*model->vertexBuffer,0);
-    for(const auto& node : model->nodes)
-    {
-		drawNode(*this,model,node);
 	}
 }
 void Renderer::blendFunc(Factor src,Factor dst)

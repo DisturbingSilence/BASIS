@@ -11,3 +11,4 @@ Adapting [Fwog](https://github.com/JuanDiegoMontoya/Fwog) for personal needs in 
  - [ ] Automatic glad pulling(?)
  - [x] Compute shaders
  - [ ] KTX2  
+ - [ ] JSON configuration files for quick scene setup(simdjson)
