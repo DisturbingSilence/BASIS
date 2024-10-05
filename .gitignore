@@ -1,0 +1,5 @@
+build
+assets
+shaders
+external/stb_image.h
+external/stb_image_write.h

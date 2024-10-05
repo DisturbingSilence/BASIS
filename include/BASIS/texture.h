@@ -1,0 +1,100 @@
+#pragma once
+
+#include <BASIS/types.h>
+
+#include <cstdint>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/detail/type_vec2.hpp>
+#include <glm/detail/type_vec3.hpp>
+
+namespace BASIS
+{
+struct TextureUpdateInfo
+{
+	std::uint32_t level{};
+	glm::ivec3 offset{};
+	glm::ivec3 extent{};
+	UploadType type = UploadType::INFER_TYPE;
+	UploadFormat fmt = UploadFormat::INFER_FMT;
+	
+	// either used as raw data ptr or an offset into PBO, when copying buffer->texture
+	const void* data{};
+	/// size of rows in array, if 0 - tightly packed. 2D & 3D
+	std::uint32_t rowLength = 0;
+	/// number of rows in array,if 0 - tightly packed. 3D
+	std::uint32_t imageHeight = 0;
+};
+struct TextureCreateInfo
+{
+	Format		fmt{};
+	uint16_t	mipLevels{};
+	uint16_t	arrayLayers{};
+	glm::uvec3 	extent{};
+	ImageType	type{};
+	SampleCount samples{};
+};
+struct SamplerInfo
+{
+	bool operator==(const SamplerInfo&) const noexcept = default;
+	
+	using enum AddressMode;
+	using enum Filter;
+	
+	float lodBias{0};
+	float minLod{-1000};
+	float maxLod{1000};
+	
+	bool compareEnable = false;
+	Filter minFilter = LINEAR;
+	Filter magFilter = LINEAR;
+	Filter mipmapFilter = NONE;
+	SampleCount anisotropy = SampleCount::SAMPLES_1;
+	AddressMode addressModeU = CLAMP_EDGE;
+	AddressMode addressModeV = CLAMP_EDGE;
+	AddressMode addressModeW = CLAMP_EDGE;
+	CompareMode compareMode = CompareMode::NEVER;
+};
+struct Sampler
+{
+	std::uint32_t id() const noexcept { return m_id;}
+	private:
+	Sampler(std::uint32_t id) : m_id{id} {}
+	std::uint32_t m_id{};
+	friend class Manager;
+};
+struct Texture : public BaseClass
+{	
+	explicit Texture(const TextureCreateInfo& info,std::string_view name="");
+	
+	Texture(Texture&& other) noexcept;
+    Texture& operator=(Texture&& other) noexcept;
+    ~Texture();
+	const TextureCreateInfo& info() const noexcept{ return m_info; }
+
+	void update(const TextureUpdateInfo& info);
+	void mipmap();
+	
+	[[nodiscard]]std::uint64_t makeBindless(Sampler sampler);
+	
+	std::uint64_t bindlessHandle() const noexcept { return m_bindlessHandle; }
+	private:
+	TextureCreateInfo m_info{};
+	std::uint64_t m_bindlessHandle{};
+};
+
+// non-member texture-related functions
+
+Texture createTexture2D(glm::uvec2 size,Format fmt,std::string_view name="");
+Texture createTexture2DMip(glm::ivec2 size,Format fmt,std::uint32_t mipMaps,std::string_view name="");
+
+Texture loadTexture(std::string_view filePath,bool SRGB = false);
+Texture loadTexture(const std::byte* bytes,std::size_t size,bool SRGB = false);
+Texture loadTexture(const unsigned char* bytes,std::size_t size,bool SRGB = false);
+
+struct Buffer;
+void copyBufferToTexture(const Buffer& src,Texture& dst,const TextureUpdateInfo& inf);
+void saveTexture(std::string_view p,const Texture& tex,int32_t level = 0,bool overwrite = true);
+}
