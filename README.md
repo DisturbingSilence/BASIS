@@ -3,6 +3,7 @@ Adapting [Fwog](https://github.com/JuanDiegoMontoya/Fwog) for personal needs in 
 
 ## TODO:
  - [ ] SPIRV support
+    * lacks GL_ARB_bindless_texture support as of 06.10.2024
  - [ ] Framebuffer abstraction
  - [ ] Audio
  - [ ] Viewports and scissors
