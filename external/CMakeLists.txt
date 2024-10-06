@@ -39,16 +39,20 @@ FetchContent_Declare(
 	stbi
 	GIT_REPOSITORY https://github.com/nothings/stb
 )
+if(NOT EXISTS ${PROJECT_SOURCE_DIR}/external/stb_image.h)
 file(
 	DOWNLOAD 
 	https://raw.githubusercontent.com/nothings/stb/refs/heads/master/stb_image.h
 	${PROJECT_SOURCE_DIR}/external/stb_image.h
 )
+endif()
+if(NOT EXISTS ${PROJECT_SOURCE_DIR}/external/stb_image_write.h)
 file(
 	DOWNLOAD 
 	https://raw.githubusercontent.com/nothings/stb/refs/heads/master/stb_image_write.h
 	${PROJECT_SOURCE_DIR}/external/stb_image_write.h
 )
+endif()
 FetchContent_MakeAvailable(glm simdjson fastgltf glfw3 imgui_internal)
 
 add_library(imgui
