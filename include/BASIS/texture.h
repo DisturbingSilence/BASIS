@@ -57,12 +57,16 @@ struct SamplerInfo
 	AddressMode addressModeW = CLAMP_EDGE;
 	CompareMode compareMode = CompareMode::NEVER;
 };
-struct Sampler
+// can be created standalone, but better use getSampler in Manager class
+struct Sampler : public BaseClass
 {
-	std::uint32_t id() const noexcept { return m_id;}
+	Sampler(const SamplerInfo& inf);
+	Sampler& operator=(Sampler&&) noexcept;
+	Sampler(Sampler&&) noexcept;
+	const SamplerInfo& info() const noexcept { return m_info; }
 	private:
-	Sampler(std::uint32_t id) : m_id{id} {}
-	std::uint32_t m_id{};
+	SamplerInfo m_info{};
+	Sampler(std::uint32_t id,const SamplerInfo& inf);
 	friend class Manager;
 };
 struct Texture : public BaseClass
@@ -77,12 +81,13 @@ struct Texture : public BaseClass
 	void update(const TextureUpdateInfo& info);
 	void mipmap();
 	
-	[[nodiscard]]std::uint64_t makeBindless(Sampler sampler);
+	[[nodiscard]]std::uint64_t makeBindless(const Sampler& sampler) const noexcept;
 	
 	std::uint64_t bindlessHandle() const noexcept { return m_bindlessHandle; }
 	private:
 	TextureCreateInfo m_info{};
-	std::uint64_t m_bindlessHandle{};
+	// user may make bindless handle from view given by getTexture()
+	mutable std::uint64_t m_bindlessHandle{};
 };
 
 // non-member texture-related functions

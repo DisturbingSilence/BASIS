@@ -34,20 +34,23 @@ struct Manager
 	
 	Manager(const Manager&) = delete;
 	Manager& operator=(const Manager&) = delete;
+	Manager(Manager&&);
+	Manager& operator=(Manager&&);
+
+	// each `get***()` function returns view into structure owned by manager
+	const Sampler* getSampler(const SamplerInfo& info) noexcept;
 	
-	Sampler getSampler(const SamplerInfo& info) noexcept;
+	const Texture* getTexture(std::uint64_t uniqueHash);
+	const Texture* getTexture(std::uint64_t uniqueHash,std::string_view path,bool SRGB = false);
+	const Texture* getTexture(std::uint64_t uniqueHash,const std::byte* px,std::size_t size,bool SRGB = false);
+	const Texture* getTexture(std::uint64_t uniqueHash,const std::uint8_t* px,std::size_t size,bool SRGB = false);
 	
-	std::shared_ptr<Texture> getTexture(std::uint64_t uniqueHash);
-	std::shared_ptr<Texture> getTexture(std::uint64_t uniqueHash,std::string_view path,bool SRGB = false);
-	std::shared_ptr<Texture> getTexture(std::uint64_t uniqueHash,const std::byte* px,std::size_t size,bool SRGB = false);
-	std::shared_ptr<Texture> getTexture(std::uint64_t uniqueHash,const std::uint8_t* px,std::size_t size,bool SRGB = false);
-	
-	std::shared_ptr<GLTFModel> getModel(std::uint64_t uniqueHash);
-	std::shared_ptr<GLTFModel> getModel(std::uint64_t uniqueHash,std::string_view,bool SRGB = false);
+	const GLTFModel* getModel(std::uint64_t uniqueHash);
+	const GLTFModel* getModel(std::uint64_t uniqueHash,std::string_view,bool SRGB = false);
 	
 	// for inserting hand crafted assets, will throw AssetException if asset with such hash already exists
-	void insertModel(std::uint64_t uniqueHash,const std::shared_ptr<GLTFModel>& model);
-	void insertTexture(std::uint64_t uniqueHash,const std::shared_ptr<Texture>& tex);
+	void insertModel(std::uint64_t uniqueHash,GLTFModel&& model);
+	void insertTexture(std::uint64_t uniqueHash,Texture&& tex);
 	
 
 	// used to filter needed data from Material struct and upload it into ubo
@@ -56,9 +59,9 @@ struct Manager
 	std::function<Buffer(const std::vector<Material>&)> materialUploadCallback{};
 		
 	private:
-	std::unordered_map<std::uint64_t,Sampler> m_samplers;
-	std::unordered_map<std::uint64_t,std::shared_ptr<Texture>> m_textures;
-	std::unordered_map<std::uint64_t,std::shared_ptr<GLTFModel>> m_models;
+	std::unordered_map<std::uint64_t,std::unique_ptr<Sampler>> m_samplers;
+	std::unordered_map<std::uint64_t,std::unique_ptr<Texture>> m_textures;
+	std::unordered_map<std::uint64_t,std::unique_ptr<GLTFModel>> m_models;
 };
 struct Primitive 
 {
@@ -81,7 +84,7 @@ enum MaterialFlags : std::uint32_t
 };
 struct Node
 {
-	int32_t parent{-1};
+	std::int32_t parent{-1};
 	Mesh mesh;
 	glm::mat4			matrix;
 	glm::vec3           translation{};
@@ -119,10 +122,10 @@ struct Material
 struct GLTFModel
 {
 	std::vector<Node>			nodes;
-	std::vector<Texture>		images;
-	std::vector<Sampler>		samplers;
 	std::vector<Material>		materials;
 	std::vector<GltfTexture>	textures;
+	std::vector<const Texture*>	images;
+	std::vector<const Sampler*>	samplers;
 	
 	std::optional<Buffer>		idxBuffer;
 	std::optional<Buffer>		vertexBuffer;

@@ -29,23 +29,25 @@ namespace bs = BASIS;
 
 namespace BASIS
 {
-std::shared_ptr<Texture> Manager::getTexture(std::uint64_t uniqueHash)
+const Texture* Manager::getTexture(std::uint64_t uniqueHash)
 {
-	if(auto it = m_textures.find(uniqueHash);it != m_textures.end()) return it->second;
+	if(auto it = m_textures.find(uniqueHash);it != m_textures.end()) return it->second.get();
+
 	throw AssetException("getTexture() can't return texture with such hash as it doesn't exist");
 }
-std::shared_ptr<Texture> Manager::getTexture(std::uint64_t uniqueHash,std::string_view path,bool SRGB)
+const Texture* Manager::getTexture(std::uint64_t uniqueHash,std::string_view path,bool SRGB)
 {
-	if(auto it = m_textures.find(uniqueHash);it != m_textures.end()) return it->second;
-	
-	return m_textures.insert({uniqueHash,std::make_shared<Texture>(loadTexture(path,SRGB))}).first->second;
+	if(auto it = m_textures.find(uniqueHash);it != m_textures.end()) return it->second.get();
+
+	return m_textures.insert({uniqueHash,std::make_unique<Texture>(loadTexture(path,SRGB))}).first->second.get();
 }
-std::shared_ptr<Texture> Manager::getTexture(std::uint64_t uniqueHash,const std::byte* px,std::size_t size,bool SRGB)
+const Texture* Manager::getTexture(std::uint64_t uniqueHash,const std::byte* px,std::size_t size,bool SRGB)
 {
-	if(auto it = m_textures.find(uniqueHash);it != m_textures.end()) return it->second;
-	return m_textures.insert({uniqueHash,std::make_shared<Texture>(loadTexture(px,size,SRGB))}).first->second;
+	if(auto it = m_textures.find(uniqueHash);it != m_textures.end()) return it->second.get();
+
+	return m_textures.insert({uniqueHash,std::make_unique<Texture>(loadTexture(px,size,SRGB))}).first->second.get();
 }
-std::shared_ptr<Texture> Manager::getTexture(std::uint64_t uniqueHash,const std::uint8_t* px,std::size_t size,bool SRGB)
+const Texture* Manager::getTexture(std::uint64_t uniqueHash,const std::uint8_t* px,std::size_t size,bool SRGB)
 {
 	return getTexture(uniqueHash,reinterpret_cast<const std::byte*>(px),size,SRGB);	
 }
@@ -63,13 +65,29 @@ static size_t hashSamplerInfo(const SamplerInfo& inf)
 
 	return totalHash;
 }
-Sampler Manager::getSampler(const SamplerInfo& inf) noexcept
+Manager::Manager(Manager&& other)
+{
+	m_models = std::move(other.m_models);
+	m_samplers = std::move(other.m_samplers);
+	m_textures = std::move(other.m_textures);
+	if(other.materialUploadCallback) materialUploadCallback = other.materialUploadCallback;
+}
+Manager& Manager::operator=(Manager&& other)
+{
+	if(&other == this) return *this;
+	m_models = std::move(other.m_models);
+	m_samplers = std::move(other.m_samplers);
+	m_textures = std::move(other.m_textures);
+	if(other.materialUploadCallback) materialUploadCallback = other.materialUploadCallback;
+	return *this;
+}
+const Sampler* Manager::getSampler(const SamplerInfo& inf) noexcept
 {
 	//TODO: add border color selection
 	size_t iHash = hashSamplerInfo(inf);
-	if(auto it = m_samplers.find(iHash);it != m_samplers.end()) return it->second;
+	if(auto it = m_samplers.find(iHash);it != m_samplers.end()) return it->second.get();
 
-	uint32_t m_id;
+	std::uint32_t m_id;
 	glCreateSamplers(1, &m_id);
 
     glSamplerParameteri(m_id,GL_TEXTURE_COMPARE_MODE,inf.compareEnable ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE);
@@ -86,7 +104,7 @@ Sampler Manager::getSampler(const SamplerInfo& inf) noexcept
     glSamplerParameterf(m_id, GL_TEXTURE_LOD_BIAS, inf.lodBias);
     glSamplerParameterf(m_id, GL_TEXTURE_MIN_LOD, inf.minLod);
     glSamplerParameterf(m_id, GL_TEXTURE_MAX_LOD, inf.maxLod);
-    return m_samplers.insert({iHash,Sampler(m_id)}).second;
+    return m_samplers.insert({iHash,std::make_unique<Sampler>(Sampler(m_id,inf))}).first->second.get();
 }
 
 static void primitiveToVertices(
@@ -239,40 +257,37 @@ fg::Error loadGltf(std::filesystem::path path,fg::Asset* asset)
     *asset = std::move(res.get());
     return fg::Error::None;
 }
-static std::vector<Texture> loadImages(const fg::Asset& asset,bool SRGB) 
+static std::vector<const Texture*> loadImages(const fg::Asset& asset,Manager& m,std::uint64_t hash,bool SRGB) 
 {
-	std::vector<Texture> images;
+	std::vector<const Texture*> images;
 	images.reserve(asset.images.size());
 	// std::transform does not change size and can't resize() cause no default ctor
-	for(const auto& image : asset.images)
+	for(std::uint32_t i{};i<asset.images.size();i++)
 	{
-		std::optional<Texture> t;
-		if (auto* path = std::get_if<fg::sources::URI>(&image.data)) 
+		if (auto* path = std::get_if<fg::sources::URI>(&asset.images[i].data)) 
 		{
 			assert(path->fileByteOffset == 0);
 			assert(path->uri.isLocalPath());
-			t = bs::loadTexture(path->uri.path(),SRGB);
+			images.push_back(m.getTexture(hash + i,path->uri.path(),SRGB));
 		} 
-		else if (auto* vector = std::get_if<fg::sources::Array>(&image.data)) 
+		else if (auto* vector = std::get_if<fg::sources::Array>(&asset.images[i].data)) 
 		{
-			t = bs::loadTexture(vector->bytes.data(), vector->bytes.size(),SRGB);
+			images.push_back(m.getTexture(hash + i,vector->bytes.data(), vector->bytes.size(),SRGB));
 		} 
-		else if (auto* view = std::get_if<fg::sources::BufferView>(&image.data)) 
+		else if (auto* view = std::get_if<fg::sources::BufferView>(&asset.images[i].data)) 
 		{
 			auto& bufferView = asset.bufferViews[view->bufferViewIndex];
 			auto& buffer = asset.buffers[bufferView.bufferIndex];
 			if (auto* vector = std::get_if<fg::sources::Array>(&buffer.data)) 
 			{
-				t = bs::loadTexture(vector->bytes.data() + bufferView.byteOffset, bufferView.byteLength,SRGB);
+				auto tex = m.getTexture(hash + i,vector->bytes.data() + bufferView.byteOffset, bufferView.byteLength,SRGB);
+				images.push_back(tex);
 			}
 		}
 		else
 		{
-			throw bs::AssetException(image.name," unknown texture source(this should not happen at all)");
+			throw bs::AssetException(asset.images[i].name," unknown texture source(this should not happen at all)");
 		}
-		t->mipmap();
-		
-		images.push_back(std::move(*t));
 	}
 	return images;
 }
@@ -283,7 +298,7 @@ static std::vector<GltfTexture> loadTextures(const fg::Asset& asset)
 	std::for_each(asset.textures.begin(),asset.textures.end(),
 	[&](const fg::Texture& t)
 	{
-		size_t idx{};
+		std::size_t idx{};
 		if(t.webpImageIndex)
 		{
 			idx = t.webpImageIndex.value();
@@ -300,14 +315,13 @@ static std::vector<GltfTexture> loadTextures(const fg::Asset& asset)
 		{
 			idx = t.imageIndex.value();
 		}
-		
 		textures.emplace_back(idx,t.samplerIndex.value());
 	});
 	return textures;
 }
-static std::vector<Sampler> loadSamplers(const fg::Asset& asset,Manager& manager)
+static std::vector<const Sampler*> loadSamplers(const fg::Asset& asset,Manager& manager)
 {
-	std::vector<Sampler> samplers;
+	std::vector<const Sampler*> samplers;
 	samplers.reserve(asset.samplers.size());
 	std::for_each(asset.samplers.begin(),asset.samplers.end(),
 	[&](const fg::Sampler& src)
@@ -344,27 +358,27 @@ static std::vector<Material> loadMaterials(const fg::Asset& asset,GLTFModel& mod
 			temp.flags |= MaterialFlags::HasBaseColorTexture;
 			auto gltfTexture = model.textures[mat.pbrData.baseColorTexture.value().textureIndex];
 			auto& image = model.images[gltfTexture.imageIdx];
-			temp.baseColorTexture = image.makeBindless(model.samplers[gltfTexture.samplerIdx]);
+			temp.baseColorTexture = image->makeBindless(*model.samplers[gltfTexture.samplerIdx]);
 		}
 		if (mat.pbrData.metallicRoughnessTexture) 
 		{
 			temp.flags |= MaterialFlags::HasMetallicRoughnessTexture;
 			auto gltfTexture = model.textures[mat.pbrData.metallicRoughnessTexture.value().textureIndex];
 			auto& image = model.images[gltfTexture.imageIdx];
-			temp.metallicRoughnessTexture = image.makeBindless(model.samplers[gltfTexture.samplerIdx]);
+			temp.metallicRoughnessTexture = image->makeBindless(*model.samplers[gltfTexture.samplerIdx]);
 		}
 		materials.push_back(std::move(temp));
 	}
 	return materials;
 }
-std::shared_ptr<GLTFModel> Manager::getModel(std::uint64_t uniqueHash)
+const GLTFModel* Manager::getModel(std::uint64_t uniqueHash)
 {
-	if(auto it = m_models.find(uniqueHash);it != m_models.end()) return it->second;
+	if(auto it = m_models.find(uniqueHash);it != m_models.end()) return it->second.get();
 	throw AssetException("getModel() can't return model with such hash as it doesn't exist");
 }
-std::shared_ptr<GLTFModel> Manager::getModel(std::uint64_t uniqueHash,std::string_view path,bool SRGB)
+const GLTFModel* Manager::getModel(std::uint64_t uniqueHash,std::string_view path,bool SRGB)
 {
-	if(auto it = m_models.find(uniqueHash);it != m_models.end()) return it->second;
+	if(auto it = m_models.find(uniqueHash);it != m_models.end()) return it->second.get();
 	
 	assert(materialUploadCallback && "Material upload callback not set");
 	if(!std::filesystem::exists(path)) throw FileException(path," does not exist");
@@ -376,7 +390,7 @@ std::shared_ptr<GLTFModel> Manager::getModel(std::uint64_t uniqueHash,std::strin
 	}
 
 	GLTFModel outModel;
-	outModel.images = loadImages(asset,SRGB);
+	outModel.images = loadImages(asset,*this,uniqueHash,SRGB);
 	outModel.textures = loadTextures(asset);
 	outModel.samplers = loadSamplers(asset,*this);
 	outModel.materials = loadMaterials(asset,outModel);
@@ -394,23 +408,23 @@ std::shared_ptr<GLTFModel> Manager::getModel(std::uint64_t uniqueHash,std::strin
 	}
 	outModel.vertexBuffer = BASIS::Buffer(std::span<Vertex>(vBuf),0);
 	outModel.idxBuffer = BASIS::Buffer(std::span<uint32_t>(iBuf),0);
-	return m_models.insert({uniqueHash,std::make_shared<GLTFModel>(std::move(outModel))}).first->second;	
+	return m_models.insert({uniqueHash,std::make_unique<GLTFModel>(std::move(outModel))}).first->second.get();	
 }
-void Manager::insertModel(std::uint64_t uniqueHash,const std::shared_ptr<GLTFModel>& model)
+void Manager::insertModel(std::uint64_t uniqueHash,GLTFModel&& model)
 {
 	if(m_models.contains(uniqueHash)) throw AssetException("insertModel failed, such hash already exists");
-	m_models.insert({uniqueHash,model});
+	m_models.insert({uniqueHash,std::make_unique<GLTFModel>(std::forward<GLTFModel>(model))});
 }
-void Manager::insertTexture(std::uint64_t uniqueHash,const std::shared_ptr<Texture>& tex)
+void Manager::insertTexture(std::uint64_t uniqueHash,Texture&& tex)
 {
 	if(m_textures.contains(uniqueHash)) throw AssetException("insertTexture failed, such hash already exists");
-	m_textures.insert({uniqueHash,tex});
+	m_textures.insert({uniqueHash,std::make_unique<Texture>(std::forward<Texture>(tex))});
 }
 Manager::~Manager()
 {
 	for(const auto& [_,s] : m_samplers)
 	{
-		glDeleteSamplers(1,&s.m_id);
+		glDeleteSamplers(1,&s->m_id);
 	};
 }
 };

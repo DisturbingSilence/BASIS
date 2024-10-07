@@ -123,6 +123,42 @@ Texture& Texture::operator=(Texture&& other) noexcept
 	m_id = std::exchange(other.m_id,0);
 	return *this;
 }
+Sampler& Sampler::operator=(Sampler&& other) noexcept
+{
+	if(&other == this) return *this;
+	m_info = other.m_info;
+	m_id = std::exchange(other.m_id,0);
+	return *this;
+}
+
+Sampler::Sampler(Sampler&& other) noexcept :
+m_info{std::move(other.m_info)}
+{
+	m_id = std::exchange(other.m_id,0);
+}
+Sampler::Sampler(std::uint32_t id,const SamplerInfo& inf) : m_info{inf}
+{
+	m_id = id;
+}
+Sampler::Sampler(const SamplerInfo& inf) : m_info{inf}
+{
+	glCreateSamplers(1, &m_id);
+
+    glSamplerParameteri(m_id,GL_TEXTURE_COMPARE_MODE,inf.compareEnable ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE);
+    glSamplerParameteri(m_id, GL_TEXTURE_COMPARE_FUNC,enumToGL(inf.compareMode));
+
+    glSamplerParameteri(m_id, GL_TEXTURE_MAG_FILTER, inf.magFilter == Filter::LINEAR ? GL_LINEAR : GL_NEAREST);
+    glSamplerParameteri(m_id, GL_TEXTURE_MIN_FILTER, enumToGL(inf.minFilter));
+
+    glSamplerParameteri(m_id, GL_TEXTURE_WRAP_S, enumToGL(inf.addressModeU));
+    glSamplerParameteri(m_id, GL_TEXTURE_WRAP_T, enumToGL(inf.addressModeV));
+    glSamplerParameteri(m_id, GL_TEXTURE_WRAP_R, enumToGL(inf.addressModeW));
+
+    glSamplerParameterf(m_id,GL_TEXTURE_MAX_ANISOTROPY,static_cast<float>(enumToGL(inf.anisotropy)));
+    glSamplerParameterf(m_id, GL_TEXTURE_LOD_BIAS, inf.lodBias);
+    glSamplerParameterf(m_id, GL_TEXTURE_MIN_LOD, inf.minLod);
+    glSamplerParameterf(m_id, GL_TEXTURE_MAX_LOD, inf.maxLod);
+}
 Texture::~Texture()
 {
 	glDeleteTextures(1, &m_id);
@@ -319,7 +355,7 @@ void saveTexture(std::string_view filePath,const Texture& tex,std::int32_t level
 	delete[] pixels;
 	
 }
-std::uint64_t Texture::makeBindless(Sampler sampler)
+std::uint64_t Texture::makeBindless(const Sampler& sampler) const noexcept
 {
     assert(m_bindlessHandle == 0 && "Bindless handle already present");
     m_bindlessHandle = glGetTextureSamplerHandleARB(m_id, sampler.id());
@@ -327,4 +363,5 @@ std::uint64_t Texture::makeBindless(Sampler sampler)
     glMakeTextureHandleResidentARB(m_bindlessHandle);
     return m_bindlessHandle;
 }
+
 };
