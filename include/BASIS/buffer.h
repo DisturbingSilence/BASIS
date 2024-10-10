@@ -1,11 +1,9 @@
 #pragma once
 
-#include <BASIS/types.h>
+#include <BASIS/interfaces.h>
 
 #include <span>
-#include <cstdint>
 #include <string_view>
-
 	
 template<typename T>
 concept TriviallyCopyable = std::is_trivially_copyable_v<T>;
@@ -29,7 +27,7 @@ namespace BASIS
 {
 constexpr inline std::uint64_t WHOLE_BUFFER = static_cast<uint64_t>(-1);
 
-struct Buffer : public BaseClass
+struct Buffer : public IGLObject
 {
 	Buffer& operator=(Buffer&&) noexcept;
 	Buffer(Buffer&&) noexcept;

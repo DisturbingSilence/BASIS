@@ -334,18 +334,6 @@ enum class BITMASK : std::uint32_t
 	IS_NORMALIZED,  // Check if format is normalized
 	UPLOAD_FORMAT,  // Used when uploading image into OpenGL
 };
-
-// base class for opengl wrappers to inherit from
-struct BaseClass
-{
-	BaseClass() = default;
-	BaseClass(const BaseClass&) = delete;
-	BaseClass& operator=(const BaseClass&) = delete;
-
-	std::uint32_t id() const noexcept { return m_id; }
-protected:
-	std::uint32_t m_id{};
-};
 enum class Format : std::uint32_t 
 {
 	UNDEFINED = 0,

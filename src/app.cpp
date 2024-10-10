@@ -40,8 +40,10 @@ App::App(const AppCreateInfo& info)
 	
 	if(!m_win)
 	{
+		const char* errorMsg{};
+		glfwGetError(&errorMsg);
 		glfwTerminate();
-		throw ApplicationException("Window creation failure");
+		throw ApplicationException("Window creation failure[",errorMsg,']');
 	}
 	glfwMakeContextCurrent(m_win);
 	if (!gladLoadGL(glfwGetProcAddress))

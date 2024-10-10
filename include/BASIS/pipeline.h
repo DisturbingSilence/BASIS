@@ -1,4 +1,7 @@
 #pragma once
+
+#include <BASIS/interfaces.h>
+
 #include <span>
 #include <vector>
 #include <cstdint>
@@ -8,7 +11,7 @@ namespace BASIS
 {
 	
 struct Buffer;
-struct Shader : public BaseClass
+struct Shader : public IGLObject
 {
 	explicit Shader(ShaderType type,std::string_view src,std::string_view name="");
 
@@ -38,7 +41,7 @@ struct PipelineCreateInfo : public PipelineInfo
 	const Shader* tesselationControl{};
 	const Shader* tesselationEvaluation{};
 };
-struct Pipeline : public BaseClass
+struct Pipeline : public IGLObject
 {
 	explicit Pipeline(const PipelineCreateInfo& info,std::string_view name="");
 	~Pipeline();
@@ -50,7 +53,7 @@ struct Pipeline : public BaseClass
 	private:
 	PipelineInfo m_info{};
 };
-struct ComputePipeline : public BaseClass
+struct ComputePipeline : public IGLObject
 {
 	explicit ComputePipeline(const Shader& computeShader,std::string_view name="");
 	~ComputePipeline();

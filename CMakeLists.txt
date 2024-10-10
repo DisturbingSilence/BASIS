@@ -12,6 +12,7 @@ add_library(lib_basis
 	src/texture.cpp
 	src/rendering.cpp
 	src/context.cpp
+	src/timer.cpp
 )
 
 target_link_libraries(lib_basis PUBLIC glm::glm imgui glfw)

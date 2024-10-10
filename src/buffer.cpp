@@ -1,3 +1,5 @@
+
+#include <BASIS/types.h>
 #include <BASIS/buffer.h>
 
 #include <cassert>

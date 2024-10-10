@@ -1,6 +1,7 @@
 #pragma once
 
 #include <BASIS/types.h>
+#include <BASIS/interfaces.h>
 
 #include <cstdint>
 
@@ -58,7 +59,7 @@ struct SamplerInfo
 	CompareMode compareMode = CompareMode::NEVER;
 };
 // can be created standalone, but better use getSampler in Manager class
-struct Sampler : public BaseClass
+struct Sampler : public IGLObject
 {
 	Sampler(const SamplerInfo& inf);
 	Sampler& operator=(Sampler&&) noexcept;
@@ -69,7 +70,7 @@ struct Sampler : public BaseClass
 	Sampler(std::uint32_t id,const SamplerInfo& inf);
 	friend class Manager;
 };
-struct Texture : public BaseClass
+struct Texture : public IGLObject
 {	
 	explicit Texture(const TextureCreateInfo& info,std::string_view name="");
 	
