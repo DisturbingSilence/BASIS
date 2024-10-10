@@ -44,14 +44,22 @@ file(
 	DOWNLOAD 
 	https://raw.githubusercontent.com/nothings/stb/refs/heads/master/stb_image.h
 	${PROJECT_SOURCE_DIR}/external/stb_image.h
+	STATUS stb_image
 )
+if(NOT stb_image)
+	message("Failed to download stb_image.h")
+endif()
 endif()
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/external/stb_image_write.h)
 file(
 	DOWNLOAD 
 	https://raw.githubusercontent.com/nothings/stb/refs/heads/master/stb_image_write.h
 	${PROJECT_SOURCE_DIR}/external/stb_image_write.h
+	STATUS stb_write
 )
+if(NOT stb_write)
+	message("Failed to download stb_image_write.h")
+endif()
 endif()
 FetchContent_MakeAvailable(glm simdjson fastgltf glfw3 imgui_internal)
 
