@@ -239,6 +239,18 @@ void Renderer::cullFace(CullFaceMode mode)
 {
 	glCullFace(static_cast<std::uint32_t>(mode));
 }
+void Renderer::dispatch(const glm::vec3& groupCount)
+{
+	assert(constext->isComputeActive);
+	glDispatchCompute(groupCount.x, groupCount.y,groupCount.z);
+}
+void Renderer::dispatchIndirect(const Buffer& cmdBuf,std::uint64_t offset)
+{
+	assert(context->isComputeActive);
+
+	glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, cmdBuf.id());
+	glDispatchComputeIndirect(offset);
+}
 void Renderer::frontFace(FrontFaceMode mode)
 {
 	glFrontFace(static_cast<std::uint32_t>(mode));

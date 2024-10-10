@@ -1,5 +1,5 @@
 # BASIS
-Adapting [Fwog](https://github.com/JuanDiegoMontoya/Fwog) for personal needs in the process of learning opengl
+Library for quick prototyping based on [Fwog](https://github.com/JuanDiegoMontoya/Fwog)
 
 ## TODO
  - [ ] SPIRV support

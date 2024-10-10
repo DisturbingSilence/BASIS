@@ -79,6 +79,9 @@ struct Renderer
 		std::uint32_t drawCount,
 		std::uint32_t stride,
 		std::uint64_t commandBufferOffset = 0);
+
+	void dispatch(const glm::vec3& groupCount);
+	void dispatchIndirect(const Buffer& buf,std::uint64_t offset = 0);
 	
 	void drawIndexedIndirectCount(
 	const Buffer& commandBuffer,
