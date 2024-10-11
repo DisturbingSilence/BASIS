@@ -3,8 +3,10 @@ project(BASIS VERSION 0.0.1 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 
+include(bundle.cmake)
+
 add_subdirectory(external)
-add_library(lib_basis
+add_library(lib_basis STATIC
 	src/app.cpp
 	src/pipeline.cpp
 	src/buffer.cpp
@@ -16,7 +18,8 @@ add_library(lib_basis
 )
 
 target_link_libraries(lib_basis PUBLIC glm::glm imgui glfw)
-target_link_libraries(lib_basis PRIVATE glfw fastgltf glad simdjson)
+target_link_libraries(lib_basis PRIVATE fastgltf glad simdjson)
 
 target_include_directories(lib_basis PUBLIC include external)
 
+#bundle_static_library(lib_basis lib_basis_bundled)

@@ -63,7 +63,7 @@ endif()
 endif()
 FetchContent_MakeAvailable(glm simdjson fastgltf glfw3 imgui_internal)
 
-add_library(imgui
+add_library(imgui STATIC
 	${imgui_internal_SOURCE_DIR}/imgui.cpp
 	${imgui_internal_SOURCE_DIR}/imgui_draw.cpp
 	${imgui_internal_SOURCE_DIR}/imgui_widgets.cpp
