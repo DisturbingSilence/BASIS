@@ -35,21 +35,21 @@ const Texture* Manager::getTexture(std::uint64_t uniqueHash)
 
 	throw AssetException("getTexture() can't return texture with such hash as it doesn't exist");
 }
-const Texture* Manager::getTexture(std::uint64_t uniqueHash,std::string_view path,bool SRGB)
+const Texture* Manager::getTexture(std::uint64_t uniqueHash,std::string_view path,Format fmt)
 {
 	if(auto it = m_textures.find(uniqueHash);it != m_textures.end()) return it->second.get();
 
-	return m_textures.insert({uniqueHash,std::make_unique<Texture>(loadTexture(path,SRGB))}).first->second.get();
+	return m_textures.insert({uniqueHash,std::make_unique<Texture>(loadTexture(path,fmt))}).first->second.get();
 }
-const Texture* Manager::getTexture(std::uint64_t uniqueHash,const std::byte* px,std::size_t size,bool SRGB)
+const Texture* Manager::getTexture(std::uint64_t uniqueHash,const std::byte* px,std::size_t size,Format fmt)
 {
 	if(auto it = m_textures.find(uniqueHash);it != m_textures.end()) return it->second.get();
 
-	return m_textures.insert({uniqueHash,std::make_unique<Texture>(loadTexture(px,size,SRGB))}).first->second.get();
+	return m_textures.insert({uniqueHash,std::make_unique<Texture>(loadTexture(px,size,fmt))}).first->second.get();
 }
-const Texture* Manager::getTexture(std::uint64_t uniqueHash,const std::uint8_t* px,std::size_t size,bool SRGB)
+const Texture* Manager::getTexture(std::uint64_t uniqueHash,const std::uint8_t* px,std::size_t size,Format fmt)
 {
-	return getTexture(uniqueHash,reinterpret_cast<const std::byte*>(px),size,SRGB);	
+	return getTexture(uniqueHash,reinterpret_cast<const std::byte*>(px),size,fmt);	
 }
 static size_t hashSamplerInfo(const SamplerInfo& inf)
 {
@@ -257,7 +257,7 @@ fg::Error loadGltf(std::filesystem::path path,fg::Asset* asset)
     *asset = std::move(res.get());
     return fg::Error::None;
 }
-static std::vector<const Texture*> loadImages(const fg::Asset& asset,Manager& m,std::uint64_t hash,bool SRGB) 
+static std::vector<const Texture*> loadImages(const fg::Asset& asset,Manager& m,std::uint64_t hash) 
 {
 	std::vector<const Texture*> images;
 	images.reserve(asset.images.size());
@@ -268,11 +268,11 @@ static std::vector<const Texture*> loadImages(const fg::Asset& asset,Manager& m,
 		{
 			assert(path->fileByteOffset == 0);
 			assert(path->uri.isLocalPath());
-			images.push_back(m.getTexture(hash + i,path->uri.path(),SRGB));
+			images.push_back(m.getTexture(hash + i,path->uri.path()));
 		} 
 		else if (auto* vector = std::get_if<fg::sources::Array>(&asset.images[i].data)) 
 		{
-			images.push_back(m.getTexture(hash + i,vector->bytes.data(), vector->bytes.size(),SRGB));
+			images.push_back(m.getTexture(hash + i,vector->bytes.data(), vector->bytes.size()));
 		} 
 		else if (auto* view = std::get_if<fg::sources::BufferView>(&asset.images[i].data)) 
 		{
@@ -280,7 +280,7 @@ static std::vector<const Texture*> loadImages(const fg::Asset& asset,Manager& m,
 			auto& buffer = asset.buffers[bufferView.bufferIndex];
 			if (auto* vector = std::get_if<fg::sources::Array>(&buffer.data)) 
 			{
-				auto tex = m.getTexture(hash + i,vector->bytes.data() + bufferView.byteOffset, bufferView.byteLength,SRGB);
+				auto tex = m.getTexture(hash + i,vector->bytes.data() + bufferView.byteOffset, bufferView.byteLength);
 				images.push_back(tex);
 			}
 		}
@@ -376,7 +376,7 @@ const GLTFModel* Manager::getModel(std::uint64_t uniqueHash)
 	if(auto it = m_models.find(uniqueHash);it != m_models.end()) return it->second.get();
 	throw AssetException("getModel() can't return model with such hash as it doesn't exist");
 }
-const GLTFModel* Manager::getModel(std::uint64_t uniqueHash,std::string_view path,bool SRGB)
+const GLTFModel* Manager::getModel(std::uint64_t uniqueHash,std::string_view path)
 {
 	if(auto it = m_models.find(uniqueHash);it != m_models.end()) return it->second.get();
 	
@@ -390,7 +390,7 @@ const GLTFModel* Manager::getModel(std::uint64_t uniqueHash,std::string_view pat
 	}
 
 	GLTFModel outModel;
-	outModel.images = loadImages(asset,*this,uniqueHash,SRGB);
+	outModel.images = loadImages(asset,*this,uniqueHash);
 	outModel.textures = loadTextures(asset);
 	outModel.samplers = loadSamplers(asset,*this);
 	outModel.materials = loadMaterials(asset,outModel);
@@ -413,6 +413,13 @@ const GLTFModel* Manager::getModel(std::uint64_t uniqueHash,std::string_view pat
 void Manager::insertModel(std::uint64_t uniqueHash,GLTFModel&& model)
 {
 	if(m_models.contains(uniqueHash)) throw AssetException("insertModel failed, such hash already exists");
+	assert(model.vertexBuffer && model.idxBuffer);
+	if(!model.materialBuffer)
+	{
+		assert(materialUploadCallback && "Material upload callback must be set if you with to autofill material buffer");
+		assert(model.materials.size() > 0 && "Nothing to autofill material buffer with");
+		model.materialBuffer = Buffer(std::span<Material>(model.materials),0);
+	}
 	m_models.insert({uniqueHash,std::make_unique<GLTFModel>(std::forward<GLTFModel>(model))});
 }
 void Manager::insertTexture(std::uint64_t uniqueHash,Texture&& tex)

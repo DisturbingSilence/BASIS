@@ -261,7 +261,7 @@ Texture createTexture2DMip(glm::uvec2 size,Format fmt,uint16_t mipMaps,std::stri
 		.samples = SampleCount::SAMPLES_1,	
 	},name);
 }
-static Texture constructSTBI(bool SRGB,const unsigned char* bytes,size_t size,std::string_view file="")
+static Texture constructSTBI(Format fmt,const unsigned char* bytes,size_t size,std::string_view file="")
 {
 	int w{},h{},channels{};
 	auto* px = bytes ? stbi_load_from_memory(bytes,size,&w,&h,&channels,0) : stbi_load(file.data(),&w,&h,&channels,0);
@@ -269,14 +269,17 @@ static Texture constructSTBI(bool SRGB,const unsigned char* bytes,size_t size,st
 	{
 		throw AssetException("STBI failed to load ",bytes ? "mem" : file," error message:",stbi_failure_reason());
 	}
-	Format fmt{};
-	switch(channels)
+	if(fmt == Format::UNDEFINED)
 	{
-		case 1: fmt = Format::R8; break;
-		case 2: fmt = Format::RG8; break;
-		case 3: fmt = SRGB ? Format::SRGB8 : Format::RGB8; break;
-		case 4: fmt = SRGB ? Format::SRGBA8 : Format::RGBA8; break;
+		switch(channels)
+		{
+			case 1: fmt = Format::R8;		break;
+			case 2: fmt = Format::RG8;		break;
+			case 3: fmt = Format::RGB8;		break;
+			case 4: fmt = Format::RGBA8;	break;
+		}
 	}
+
 	auto tex = createTexture2D(glm::uvec2(w,h),fmt);
 	tex.update(
 	{
@@ -287,7 +290,7 @@ static Texture constructSTBI(bool SRGB,const unsigned char* bytes,size_t size,st
 	stbi_image_free(px);
 	return tex;
 }
-Texture loadTexture(std::string_view filePath,bool SRGB)
+Texture loadTexture(std::string_view filePath,Format fmt)
 {
 	if(!std::filesystem::exists(filePath)) 
 	{
@@ -300,20 +303,20 @@ Texture loadTexture(std::string_view filePath,bool SRGB)
 		case "png"_hash:
 		case "bmp"_hash:
 		case "tga"_hash:
-		return constructSTBI(SRGB,nullptr,0,filePath);
+		return constructSTBI(fmt,nullptr,0,filePath);
 		default : 
 		throw FileException(filePath," unsupported texture format");
 		
 	};	
 }
 
-Texture loadTexture(const unsigned char* bytes,size_t size,bool SRGB)
+Texture loadTexture(const unsigned char* bytes,size_t size,Format fmt)
 {
-	return constructSTBI(SRGB,bytes,size);
+	return constructSTBI(fmt,bytes,size);
 }
-Texture loadTexture(const std::byte* bytes,size_t size,bool SRGB)
+Texture loadTexture(const std::byte* bytes,size_t size,Format fmt)
 {
-	return loadTexture(reinterpret_cast<const unsigned char*>(bytes),size);
+	return constructSTBI(fmt,reinterpret_cast<const unsigned char*>(bytes),size);
 }
 
 void saveTexture(std::string_view filePath,const Texture& tex,std::int32_t level,bool overwrite)

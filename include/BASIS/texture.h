@@ -96,9 +96,9 @@ struct Texture : public IGLObject
 Texture createTexture2D(glm::uvec2 size,Format fmt,std::string_view name="");
 Texture createTexture2DMip(glm::ivec2 size,Format fmt,std::uint32_t mipMaps,std::string_view name="");
 
-Texture loadTexture(std::string_view filePath,bool SRGB = false);
-Texture loadTexture(const std::byte* bytes,std::size_t size,bool SRGB = false);
-Texture loadTexture(const unsigned char* bytes,std::size_t size,bool SRGB = false);
+Texture loadTexture(std::string_view filePath,Format fmt = Format::UNDEFINED);
+Texture loadTexture(const std::byte* bytes,std::size_t size,Format fmt = Format::UNDEFINED);
+Texture loadTexture(const unsigned char* bytes,std::size_t size,Format fmt = Format::UNDEFINED);
 
 struct Buffer;
 void copyBufferToTexture(const Buffer& src,Texture& dst,const TextureUpdateInfo& inf);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <BASIS/types.h>
 #include <BASIS/buffer.h>
 
 #include <string>
@@ -41,18 +42,17 @@ struct Manager
 	const Sampler* getSampler(const SamplerInfo& info) noexcept;
 	
 	const Texture* getTexture(std::uint64_t uniqueHash);
-	const Texture* getTexture(std::uint64_t uniqueHash,std::string_view path,bool SRGB = false);
-	const Texture* getTexture(std::uint64_t uniqueHash,const std::byte* px,std::size_t size,bool SRGB = false);
-	const Texture* getTexture(std::uint64_t uniqueHash,const std::uint8_t* px,std::size_t size,bool SRGB = false);
+	const Texture* getTexture(std::uint64_t uniqueHash,std::string_view path,Format fmt = Format::UNDEFINED);
+	const Texture* getTexture(std::uint64_t uniqueHash,const std::byte* px,std::size_t size,Format fmt = Format::UNDEFINED);
+	const Texture* getTexture(std::uint64_t uniqueHash,const std::uint8_t* px,std::size_t size,Format fmt = Format::UNDEFINED);
 	
 	const GLTFModel* getModel(std::uint64_t uniqueHash);
-	const GLTFModel* getModel(std::uint64_t uniqueHash,std::string_view,bool SRGB = false);
+	const GLTFModel* getModel(std::uint64_t uniqueHash,std::string_view);
 	
 	// for inserting hand crafted assets, will throw AssetException if asset with such hash already exists
 	void insertModel(std::uint64_t uniqueHash,GLTFModel&& model);
 	void insertTexture(std::uint64_t uniqueHash,Texture&& tex);
 	
-
 	// used to filter needed data from Material struct and upload it into ubo
 	// (maybe you don't want all pbr bells and whistles)
 	// getModel() asserts if this one is not provided
