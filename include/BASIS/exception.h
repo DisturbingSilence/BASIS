@@ -29,6 +29,7 @@ namespace BASIS
 	 * - getTexture(uint64_t) was called with unrecognized hash
 	 * - getModel(uint64_t) was called with unrecognized hash
 	 * - insertModel/insertTexture cannot insert asset, as it already exists
+	 * - outdated KTX texture passed to loadTexture() instead of KTX2
 	 * FileException:
 	 * - file not found
 	 * - file already exists

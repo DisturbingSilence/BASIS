@@ -11,7 +11,8 @@ Library for quick prototyping based on [Fwog](https://github.com/JuanDiegoMontoy
  - [ ] Meshlets
  - [ ] Automatic glad pulling(?)
  - [x] Compute shaders
- - [ ] KTX2  
+ - [x] KTX2
+    * Needs to be reworked in certain places
  - [ ] JSON configuration files for quick scene setup(simdjson)
 
 ## Building

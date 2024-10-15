@@ -8,16 +8,23 @@ option(GLFW_BUILD_DOCS "" OFF)
 option(GLFW_INSTALL "" OFF)
 option(GLFW_BUILD_EXAMPLES "" OFF)
 
+option(KTX_FEATURE_WRITE "" OFF)
+option(KTX_FEATURE_TESTS "" OFF)
+option(KTX_FEATURE_TOOLS "" OFF)
+option(KTX_FEATURE_VK_UPLOAD "" OFF)
+option(KTX_FEATURE_ETC_UNPACK "" OFF) # almost no support on desktop GPUs
+option(KTX_FEATURE_STATIC_LIBRARY "" ON)
+
 FetchContent_Declare(
-    	glfw3
-    	GIT_REPOSITORY https://github.com/glfw/glfw
-    	GIT_TAG        3.4
+    glfw3
+    GIT_REPOSITORY https://github.com/glfw/glfw
+    GIT_TAG        3.4
 )
 
 FetchContent_Declare(
-    	glm
-    	GIT_REPOSITORY https://github.com/g-truc/glm
-    	GIT_TAG        1.0.1
+    glm
+    GIT_REPOSITORY https://github.com/g-truc/glm
+    GIT_TAG        1.0.1
 )
 FetchContent_Declare(
     simdjson
@@ -25,9 +32,9 @@ FetchContent_Declare(
     GIT_TAG        v3.9.4
 )
 FetchContent_Declare(
-    	fastgltf
-    	GIT_REPOSITORY https://github.com/spnda/fastgltf
-    	GIT_TAG        v0.8.0
+    fastgltf
+    GIT_REPOSITORY https://github.com/spnda/fastgltf
+    GIT_TAG        v0.8.0
 )
 
 FetchContent_Declare(
@@ -36,9 +43,14 @@ FetchContent_Declare(
 	GIT_TAG        v1.91.2
 )
 FetchContent_Declare(
-	stbi
-	GIT_REPOSITORY https://github.com/nothings/stb
+    ktx
+    GIT_REPOSITORY https://github.com/KhronosGroup/KTX-Software.git
+    GIT_TAG        v4.3.2
 )
+
+FetchContent_MakeAvailable(glm simdjson fastgltf glfw3 imgui_internal ktx)
+
+
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/external/stb_image.h)
 file(
 	DOWNLOAD 
@@ -61,7 +73,7 @@ if(NOT stb_write)
 	message("Failed to download stb_image_write.h")
 endif()
 endif()
-FetchContent_MakeAvailable(glm simdjson fastgltf glfw3 imgui_internal)
+
 
 add_library(imgui STATIC
 	${imgui_internal_SOURCE_DIR}/imgui.cpp

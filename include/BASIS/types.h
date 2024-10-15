@@ -330,7 +330,7 @@ enum class BITMASK : std::uint32_t
 	// Format only
 	SIZE_GL,     // Size for vertex attributes
 	TYPE_GL,
-	IS_COMPRESSED,  // Check if format is compressed, currently unused
+	IS_COMPRESSED,  // Check if format is compressed
 	IS_NORMALIZED,  // Check if format is normalized
 	UPLOAD_FORMAT,  // Used when uploading image into OpenGL
 };
@@ -403,24 +403,23 @@ enum class Format : std::uint32_t
 	DEPTH_COMPONENT32 = fmtCtor(true, 1, UploadFormat::DEPTH_COMPONENT, false, 0x81A7),  
 	DEPTH_COMPONENT32F = fmtCtor(true, 1, UploadFormat::DEPTH_COMPONENT, false, 0x8CAC),
 	DEPTH32F_STENCIL8 = fmtCtor(true,1,UploadFormat::DEPTH_STENCIL,false,0x8CAD),
-	DEPTH24_STENCIL8 = fmtCtor(true,1,UploadFormat::DEPTH_STENCIL,false,0x88F0)
-	/*COMPRESSED_RG_RGTC2 = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, GL_COMPRESSED_RG_RGTC2),
-	COMPRESSED_RED_RGTC1 = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, GL_COMPRESSED_RED_RGTC1),
-	COMPRESSED_SIGNED_RG_RGTC2 = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, GL_COMPRESSED_SIGNED_RG_RGTC2),
-	COMPRESSED_RGBA_BPTC_UNORM = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, GL_COMPRESSED_RGBA_BPTC_UNORM),
-	COMPRESSED_SIGNED_RED_RGTC1 = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, GL_COMPRESSED_SIGNED_RED_RGTC1),
-	COMPRESSED_RGB_S3TC_DXT1_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, GL_COMPRESSED_RGB_S3TC_DXT1_EXT),
-	COMPRESSED_RGBA_S3TC_DXT1_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT),
-	COMPRESSED_SRGB_S3TC_DXT1_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, GL_COMPRESSED_SRGB_S3TC_DXT1_EXT),
-	COMPRESSED_RGBA_S3TC_DXT3_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT),
-	COMPRESSED_RGBA_S3TC_DXT5_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT),
-    COMPRESSED_RGB_BPTC_SIGNED_FLOAT = fmtCtor(false,0,UploadFormat::UNDEFINED,true,GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT),
-    COMPRESSED_SRGB_ALPHA_BPTC_UNORM = fmtCtor(false,0,UploadFormat::UNDEFINED,true,GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM),
-    COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT = fmtCtor(false,0,UploadFormat::UNDEFINED,true,GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT),
-	COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT),
-	COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT),
-	COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT)
-*/
+	DEPTH24_STENCIL8 = fmtCtor(true,1,UploadFormat::DEPTH_STENCIL,false,0x88F0),
+	COMPRESSED_RG_RGTC2 = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x8DBD),
+	COMPRESSED_RED_RGTC1 = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x8DBB),
+	COMPRESSED_SIGNED_RG_RGTC2 = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x8DBE),
+	COMPRESSED_RGBA_BPTC_UNORM = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x8E8C),
+	COMPRESSED_SIGNED_RED_RGTC1 = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x8DBC),
+	COMPRESSED_RGB_S3TC_DXT1_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x83F0),
+	COMPRESSED_RGBA_S3TC_DXT1_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x83F1),
+	COMPRESSED_SRGB_S3TC_DXT1_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x8C4C),
+	COMPRESSED_RGBA_S3TC_DXT3_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x83F2),
+	COMPRESSED_RGBA_S3TC_DXT5_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x83F3),
+	COMPRESSED_RGB_BPTC_SIGNED_FLOAT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x8E8E),
+	COMPRESSED_SRGB_ALPHA_BPTC_UNORM = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x8E8D),
+	COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x8E8F),
+	COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x8C4D),
+	COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x8C4E),
+	COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT = fmtCtor(false, 0, UploadFormat::UNDEFINED, true, 0x8C4F)
 };
 enum class IndexType : std::uint32_t
 {

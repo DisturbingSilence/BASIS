@@ -21,7 +21,7 @@ add_library(lib_basis STATIC
 option(BUNDLE_STATIC_LIBS "Bundle together all third party dependencies" OFF)
 
 target_link_libraries(lib_basis PUBLIC glm::glm imgui glfw)
-target_link_libraries(lib_basis PRIVATE fastgltf glad simdjson)
+target_link_libraries(lib_basis PRIVATE fastgltf glad simdjson ktx)
 
 target_include_directories(lib_basis PUBLIC include external)
 
