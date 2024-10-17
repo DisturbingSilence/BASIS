@@ -84,12 +84,12 @@ enum MaterialFlags : std::uint32_t
 };
 struct Node
 {
-	std::int32_t parent{-1};
-	Mesh mesh;
-	glm::mat4			matrix;
-	glm::vec3           translation{};
-	glm::vec3           scale{1.0f};
-	glm::quat           rotation{};
+	Mesh			mesh;
+	std::int32_t		parent{-1};
+	glm::mat4		matrix{1.f};
+	glm::vec3		translation{1.f};
+	glm::vec3		scale{1.f};
+	glm::quat		rotation{};
 	std::vector<std::size_t> children;
 };
 
@@ -121,7 +121,7 @@ struct Material
 };
 struct GLTFModel
 {
-	std::vector<Node>			nodes;
+	std::vector<Node>		nodes;
 	std::vector<Material>		materials;
 	std::vector<GltfTexture>	textures;
 	std::vector<const Texture*>	images;
