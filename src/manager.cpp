@@ -418,7 +418,7 @@ void Manager::insertModel(std::uint64_t uniqueHash,GLTFModel&& model)
 	{
 		assert(materialUploadCallback && "Material upload callback must be set if you with to autofill material buffer");
 		assert(model.materials.size() > 0 && "Nothing to autofill material buffer with");
-		model.materialBuffer = Buffer(std::span<Material>(model.materials),0);
+		model.materialBuffer = materialUploadCallback(model.materials);
 	}
 	m_models.insert({uniqueHash,std::make_unique<GLTFModel>(std::forward<GLTFModel>(model))});
 }

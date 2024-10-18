@@ -18,7 +18,7 @@ add_library(lib_basis STATIC
 )
 
 # requires "ar" tool
-option(BUNDLE_STATIC_LIBS "Bundle together all third party dependencies" OFF)
+option(BUNDLE_STATIC_LIBS "Bundle together all third party dependencies" ON)
 
 target_link_libraries(lib_basis PUBLIC glm::glm imgui glfw)
 target_link_libraries(lib_basis PRIVATE fastgltf glad simdjson ktx)
