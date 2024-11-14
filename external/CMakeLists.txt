@@ -13,7 +13,7 @@ option(KTX_FEATURE_TESTS "" OFF)
 option(KTX_FEATURE_TOOLS "" OFF)
 option(KTX_FEATURE_GL_UPLOAD "" OFF)
 option(KTX_FEATURE_VK_UPLOAD "" OFF)
-option(KTX_FEATURE_ETC_UNPACK "" OFF) # almost no support on desktop GPUs
+option(KTX_FEATURE_ETC_UNPACK "" OFF)
 option(KTX_FEATURE_STATIC_LIBRARY "" ON)
 
 FetchContent_Declare(
@@ -48,9 +48,7 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/KhronosGroup/KTX-Software.git
     GIT_TAG        v4.3.2
 )
-
 FetchContent_MakeAvailable(glm simdjson fastgltf glfw3 imgui_internal ktx)
-
 
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/external/stb_image.h)
 file(

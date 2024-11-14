@@ -6,11 +6,13 @@
 #include <string>
 #include <utility>
 #include <cassert>
-#include <algorithm>
+//#include <algorithm>
+#include <unordered_map>
 
 #include <glad/gl.h>
 
-
+namespace
+{
 static bool link(unsigned int program,std::string& log)
 {
 	glLinkProgram(program);
@@ -25,6 +27,28 @@ static bool link(unsigned int program,std::string& log)
 		return false;
 	}
 	return true;
+}
+std::unordered_map<std::uint32_t,std::shared_ptr<const BASIS::PipelineInfo>> pipelineCache;
+std::uint32_t compilePipeline(const BASIS::PipelineCreateInfo& info,std::string_view name)
+{
+	assert(info.vertex && "Pipeline must have at least vertex shader");
+	assert(((info.tesselationControl != nullptr) == (info.tesselationEvaluation != nullptr)) && "Tesselation control and evalution go in pair" );
+	
+	auto m_id = glCreateProgram();
+	glObjectLabel(GL_PROGRAM,m_id,name.size(),name.data());
+	glAttachShader(m_id,info.vertex->id());
+	
+	if(info.fragment)				glAttachShader(m_id,info.fragment->id());
+	if(info.tesselationControl)		glAttachShader(m_id,info.tesselationControl->id());
+	if(info.tesselationEvaluation)	glAttachShader(m_id,info.tesselationEvaluation->id());
+	std::string log;
+	if(!link(m_id,log))
+	{
+		glDeleteProgram(m_id);
+		throw BASIS::PipelineException("[LINKING FAILURE]\n",name,"\n",log);
+	}
+	return pipelineCache.insert({m_id,std::make_shared<BASIS::PipelineInfo>(info)}).first->first;
+}
 }
 namespace BASIS
 {
@@ -60,12 +84,11 @@ Shader& Shader::operator=(Shader&& other) noexcept
 	m_id = std::exchange(other.m_id,0);
 	return *this;
 }
-
 Shader::~Shader()
 {
 	glDeleteShader(m_id);
 }
-Pipeline::Pipeline(const PipelineCreateInfo& info,std::string_view name) : m_info{info}
+Pipeline::Pipeline(const PipelineCreateInfo& info,std::string_view name)
 {
 	assert(info.vertex && "Pipeline must have at least vertex shader");
 	
@@ -84,6 +107,12 @@ Pipeline::Pipeline(const PipelineCreateInfo& info,std::string_view name) : m_inf
 		glDeleteProgram(m_id);
 		throw PipelineException("[LINKING FAILURE]\n",name,"\n",log);
 	}
+	m_id = compilePipeline(info,name);
+}
+const std::shared_ptr<const PipelineInfo> Pipeline::info() const noexcept
+{
+    auto it = pipelineCache.find(m_id);
+	return it != pipelineCache.end() ? it->second : nullptr;
 }
 Pipeline::~Pipeline()
 {

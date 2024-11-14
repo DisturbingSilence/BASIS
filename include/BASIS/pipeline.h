@@ -3,6 +3,8 @@
 #include <BASIS/interfaces.h>
 
 #include <span>
+#include <array>
+#include <memory>
 #include <vector>
 #include <cstdint>
 #include <string_view>
@@ -21,18 +23,48 @@ struct Shader : public IGLObject
 };
 struct VertexBinding
 {
-	
 	std::uint32_t 	location{};
 	std::uint32_t 	binding{};
 	std::uint32_t 	offset{};
 	Format			fmt{};
 };
-using VertexInputState = std::vector<VertexBinding>;
 
+struct TessellationState
+{
+	std::array<float,2> innerPatchLevel = {1.f,1.f};		// glPatchParameterfv(GL_PATCH_DEFAULT_INNER_LEVEL,);
+	std::array<float,4> outerPatchLevel = {1.f,1.f,1.f,1.f};// glPatchParameterfv(GL_PATCH_DEFAULT_OUTER_LEVEL,);
+
+	std::uint32_t patchVertices{}; // glPatchParameteri(GL_PATCH_VERTICES,);
+};
+struct RasterizationState
+{
+	bool depthClampEnable         = false;
+	PolygonMode polygonMode    	  = PolygonMode::FILL;
+	CullMode cullMode             = CullMode::BACK;
+	FrontFace frontFace           = FrontFace::CCW;
+	bool depthBiasEnable          = false;
+	float depthBiasConstantFactor = 0;
+	float depthBiasSlopeFactor    = 0;
+	float lineWidth               = 1; // glLineWidth
+	float pointSize               = 1; // glPointSize
+};
+struct DepthState 
+{
+	bool depthTestEnable		= false;
+	bool depthWriteEnable		= false;
+	CompareMode depthCompareOp	= CompareMode::LESS;
+};
+
+using VertexInputState = std::vector<VertexBinding>;
 struct PipelineInfo
 {
 	PrimitiveMode mode{PrimitiveMode::TRIANGLES};
-	std::vector<VertexBinding> vertexState{};
+
+	DepthState			depthState{};
+	VertexInputState	vertexInputState{};
+	TessellationState	tessellationState{};
+	RasterizationState	rasterizationState{};
+
 };
 struct PipelineCreateInfo : public PipelineInfo
 {
@@ -49,9 +81,9 @@ struct Pipeline : public IGLObject
 	Pipeline(Pipeline&&) noexcept;
 	Pipeline& operator=(Pipeline&&) noexcept;
 	
-	const PipelineInfo& info() const noexcept { return m_info; }
-	private:
-	PipelineInfo m_info{};
+	// pulls info from internal pipeline cache
+	const std::shared_ptr<const PipelineInfo> info() const noexcept;
+
 };
 struct ComputePipeline : public IGLObject
 {
@@ -60,8 +92,5 @@ struct ComputePipeline : public IGLObject
 	
 	ComputePipeline(ComputePipeline&&) noexcept;
 	ComputePipeline& operator=(ComputePipeline&&) noexcept;
-	
 };
-	
-	
 }

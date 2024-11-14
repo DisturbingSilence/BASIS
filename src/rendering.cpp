@@ -8,7 +8,8 @@
 
 #include <glad/gl.h>
 
-
+namespace
+{
 static std::size_t hashVAO(const BASIS::VertexInputState& state)
 {
 	std::size_t totalHash{};
@@ -42,6 +43,11 @@ static std::uint32_t getVAO(const BASIS::VertexInputState& state)
 	});
 	return vaoCache.try_emplace(vao_hash,id).first->second;	
 }
+static void enableOrDisable(std::uint32_t state, bool value)
+{
+	value ? glEnable(state) : glDisable(state);
+}
+}
 namespace BASIS
 {
 	
@@ -70,17 +76,136 @@ void Renderer::bindPipeline(const Pipeline& pipe)
 	assert(context->isRendering);
 	assert(pipe.id() && "Can't bind uninitialized pipeline");
 	
-	const auto& inf = pipe.info();
-	if(context->lastBoundPipeline == pipe.id()) return;
-	
+	if(context->lastPipelineInfo == pipe.info()) return;
 	glUseProgram(pipe.id());
+
+	const auto& inf = pipe.info();
 	
-	context->primitiveMode = inf.mode;
-	if(auto newVao = getVAO(inf.vertexState);newVao != context->vao)
+	context->primitiveMode = inf->mode;
+	if(auto newVao = getVAO(inf->vertexInputState);newVao != context->vao)
 	{
 		context->vao = newVao;
 		glBindVertexArray(newVao);
 	}
+	// TessellationState
+	const auto& tss = inf->tessellationState;
+	if(tss.patchVertices > 0)
+	{
+		if(!context->lastPipelineInfo || tss.patchVertices != context->lastPipelineInfo->tessellationState.patchVertices)
+		{
+			glPatchParameteri(GL_PATCH_VERTICES, tss.patchVertices);
+		}
+	}
+	if(!context->lastPipelineInfo || tss.innerPatchLevel != context->lastPipelineInfo->tessellationState.innerPatchLevel)
+	{
+		glPatchParameterfv(GL_PATCH_DEFAULT_INNER_LEVEL,tss.innerPatchLevel.data());
+	}
+	if(!context->lastPipelineInfo || tss.outerPatchLevel != context->lastPipelineInfo->tessellationState.outerPatchLevel)
+	{
+		glPatchParameterfv(GL_PATCH_DEFAULT_OUTER_LEVEL,tss.outerPatchLevel.data());
+	}
+
+	// DepthState
+	const auto& ds = inf->depthState;
+	if (!context->lastPipelineInfo || ds.depthTestEnable != context->lastPipelineInfo->depthState.depthTestEnable)
+	{
+		enableOrDisable(GL_DEPTH_TEST, ds.depthTestEnable);
+	}
+
+	if (!context->lastPipelineInfo || ds.depthWriteEnable != context->lastPipelineInfo->depthState.depthWriteEnable)
+	{
+		glDepthMask(ds.depthWriteEnable);
+	}
+
+	if (!context->lastPipelineInfo || ds.depthCompareOp != context->lastPipelineInfo->depthState.depthCompareOp)
+	{
+		glDepthFunc(enumToGL(ds.depthCompareOp));
+	}
+
+	const auto& rs = inf->rasterizationState;
+	if (!context->lastPipelineInfo || rs.depthClampEnable != context->lastPipelineInfo->rasterizationState.depthClampEnable)
+	{
+		enableOrDisable(GL_DEPTH_CLAMP, rs.depthClampEnable);
+	}
+
+	if (!context->lastPipelineInfo || rs.polygonMode != context->lastPipelineInfo->rasterizationState.polygonMode)
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, enumToGL(rs.polygonMode));
+	}
+
+	if (!context->lastPipelineInfo || rs.cullMode != context->lastPipelineInfo->rasterizationState.cullMode)
+	{
+		enableOrDisable(GL_CULL_FACE, rs.cullMode != CullMode::NONE);
+		if (rs.cullMode != CullMode::NONE)
+		{
+			glCullFace(enumToGL(rs.cullMode));
+		}
+	}
+
+	if (!context->lastPipelineInfo || rs.frontFace != context->lastPipelineInfo->rasterizationState.frontFace)
+	{
+		glFrontFace(enumToGL(rs.frontFace));
+	}
+
+	if (!context->lastPipelineInfo || rs.depthBiasEnable != context->lastPipelineInfo->rasterizationState.depthBiasEnable)
+	{
+		enableOrDisable(GL_POLYGON_OFFSET_FILL, rs.depthBiasEnable);
+		enableOrDisable(GL_POLYGON_OFFSET_LINE, rs.depthBiasEnable);
+		enableOrDisable(GL_POLYGON_OFFSET_POINT, rs.depthBiasEnable);
+	}
+
+	if (!context->lastPipelineInfo ||
+	rs.depthBiasSlopeFactor != context->lastPipelineInfo->rasterizationState.depthBiasSlopeFactor ||
+	rs.depthBiasConstantFactor != context->lastPipelineInfo->rasterizationState.depthBiasConstantFactor)
+	{
+		glPolygonOffset(rs.depthBiasSlopeFactor, rs.depthBiasConstantFactor);
+	}
+
+	if (!context->lastPipelineInfo || rs.lineWidth != context->lastPipelineInfo->rasterizationState.lineWidth)
+	{
+		glLineWidth(rs.lineWidth);
+	}
+
+	if (!context->lastPipelineInfo || rs.pointSize != context->lastPipelineInfo->rasterizationState.pointSize)
+	{
+		glPointSize(rs.pointSize);
+	}
+
+}
+void Renderer::blitFramebuffer(
+	const Framebuffer& src,
+	const Framebuffer& dst,
+	glm::ivec4 srcRect,
+	glm::ivec4 dstRect,
+	MaskFlags mask,
+	Filter filter)
+{
+	assert(filter == Filter::NEAREST || filter == Filter::LINEAR);
+	glBlitNamedFramebuffer(
+		src.id(),dst.id(),
+		srcRect.x,srcRect.y,srcRect.z,srcRect.w,
+		dstRect.x,dstRect.y,dstRect.z,dstRect.w,
+		static_cast<std::uint32_t>(mask),
+		static_cast<std::uint32_t>(filter));
+}
+
+void Renderer::bindFramebuffer(const Framebuffer& fbo)
+{
+	if(fbo.id() == context->fbo) return;
+	context->fbo = fbo.id();
+	glBindFramebuffer(GL_FRAMEBUFFER,fbo.id());
+}
+void Renderer::bindDefaultFramebuffer()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
+}
+bool Renderer::isValidDrawFramebuffer(const Framebuffer& fb)
+{
+	return glCheckNamedFramebufferStatus(fb.id(),GL_DRAW_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+}
+bool Renderer::isValidReadFramebuffer(const Framebuffer& fb)
+{
+	return glCheckNamedFramebufferStatus(fb.id(),GL_READ_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 }
 void Renderer::bindComputePipeline(const ComputePipeline& pipe)
 {
@@ -235,10 +360,6 @@ void Renderer::disableCapability(Cap capability)
 {
 	glDisable(enumToGL(capability));
 }
-void Renderer::cullFace(CullFaceMode mode)
-{
-	glCullFace(static_cast<std::uint32_t>(mode));
-}
 void Renderer::dispatch(const glm::vec3& groupCount)
 {
 	assert(constext->isComputeActive);
@@ -251,10 +372,7 @@ void Renderer::dispatchIndirect(const Buffer& cmdBuf,std::uint64_t offset)
 	glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, cmdBuf.id());
 	glDispatchComputeIndirect(offset);
 }
-void Renderer::frontFace(FrontFaceMode mode)
-{
-	glFrontFace(static_cast<std::uint32_t>(mode));
-}
+
 void Renderer::beginCompute()
 {
 	assert(!context->isComputeActive);

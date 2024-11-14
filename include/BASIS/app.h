@@ -20,13 +20,11 @@ struct Camera
 	float speed{9.f};
 	glm::vec3 pos{};
 	
-	
 	glm::mat4 view() const;
 	glm::vec3 forward() const;
-	private:
-	float m_pitch{};
-	float m_yaw{};   
-	friend class App;
+
+	float pitch{};
+	float yaw{};   
 };
 
 enum AppFlags : std::uint8_t

@@ -15,6 +15,7 @@ add_library(lib_basis STATIC
 	src/rendering.cpp
 	src/context.cpp
 	src/timer.cpp
+	src/framebuffer.cpp
 )
 
 # requires "ar" tool

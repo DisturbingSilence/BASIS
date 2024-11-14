@@ -68,6 +68,9 @@ struct Primitive
 	std::uint32_t firstIdx{};
 	std::uint32_t idxCount{};
 	std::uint32_t materialIdx{};
+
+	//KHR_material_variants
+	std::vector<std::optional<std::size_t>> mappings;
 };
 struct Mesh 
 {
@@ -85,7 +88,7 @@ enum MaterialFlags : std::uint32_t
 struct Node
 {
 	Mesh			mesh;
-	std::int32_t		parent{-1};
+	std::int32_t	parent{-1};
 	glm::mat4		matrix{1.f};
 	glm::vec3		translation{1.f};
 	glm::vec3		scale{1.f};
@@ -121,7 +124,7 @@ struct Material
 };
 struct GLTFModel
 {
-	std::vector<Node>		nodes;
+	std::vector<Node>			nodes;
 	std::vector<Material>		materials;
 	std::vector<GltfTexture>	textures;
 	std::vector<const Texture*>	images;
@@ -130,6 +133,9 @@ struct GLTFModel
 	std::optional<Buffer>		idxBuffer;
 	std::optional<Buffer>		vertexBuffer;
 	std::optional<Buffer>		materialBuffer;
+
+	//KHR_material_variants
+	std::vector<std::string> materialVariants;
 };
 
 }

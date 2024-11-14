@@ -25,6 +25,7 @@ struct ByteSpan : public std::span<const std::byte>
 
 namespace BASIS
 {
+enum class AccessFlags : std::uint32_t;
 constexpr inline std::uint64_t WHOLE_BUFFER = static_cast<uint64_t>(-1);
 
 struct Buffer : public IGLObject
@@ -37,7 +38,7 @@ struct Buffer : public IGLObject
 	
 	void update(ByteSpan,std::size_t offs = 0) noexcept;
 	
-	void* map(std::uint32_t flags) noexcept;
+	void* map(AccessFlags flags) noexcept;
 	void unmap() noexcept;
 	
 	void fill(std::uint32_t value,std::size_t offset = 0,std::size_t size = WHOLE_BUFFER) noexcept;

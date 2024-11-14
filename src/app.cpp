@@ -212,16 +212,16 @@ void App::updateCamera(double delta)
 		if (glfwGetKey(m_win, GLFW_KEY_SPACE) 	      == GLFW_PRESS) m_camera.pos.y += deltaSpeed;
 		if (glfwGetKey(m_win, GLFW_KEY_LEFT_CONTROL ) == GLFW_PRESS) m_camera.pos.y -= deltaSpeed;
 		
-		m_camera.m_yaw   += static_cast<float>(m_cursorOffs.x * m_camera.sens);
-		m_camera.m_pitch += static_cast<float>(m_cursorOffs.y * m_camera.sens);
-		m_camera.m_pitch  = glm::clamp(m_camera.m_pitch, -glm::half_pi<float>() + 1e-4f, glm::half_pi<float>() - 1e-4f);
+		m_camera.yaw   += static_cast<float>(m_cursorOffs.x * m_camera.sens);
+		m_camera.pitch += static_cast<float>(m_cursorOffs.y * m_camera.sens);
+		m_camera.pitch  = glm::clamp(m_camera.pitch, -glm::half_pi<float>() + 1e-4f, glm::half_pi<float>() - 1e-4f);
     }
     m_cursorOffs = {};
 }
 
 glm::vec3 Camera::forward() const
 {
-	return glm::vec3{cos(m_pitch) * cos(m_yaw), sin(m_pitch), cos(m_pitch) * sin(m_yaw)};
+	return glm::vec3{std::cos(pitch) * std::cos(yaw), std::sin(pitch), std::cos(pitch) * std::sin(yaw)};
 }
 glm::mat4 Camera::view() const
 {

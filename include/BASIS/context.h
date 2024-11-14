@@ -96,7 +96,10 @@ struct RenderingContext
 	bool isIdxBufferBound{false};
 	bool lastPipelineWasCompute{false};
 	
+	std::uint32_t fbo{};
 	std::uint32_t vao{};
+
+	std::shared_ptr<const PipelineInfo> lastPipelineInfo;
 	std::uint32_t lastBoundPipeline{};
 	
 	IndexType idxType{IndexType::UINT};

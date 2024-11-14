@@ -214,6 +214,9 @@ std::vector<std::uint32_t>& iBuf)
 		for (auto it = inMesh.primitives.begin(); it != inMesh.primitives.end(); ++it) 
 		{
 			Primitive primitive;
+			primitive.mappings.reserve(it->mappings.size());
+			for(const auto& i : it->mappings) primitive.mappings.push_back(i.value());
+
 			if (it->materialIndex.has_value()) 
 			{
 				primitive.materialIdx = it->materialIndex.value() + 1;// default material
@@ -240,8 +243,9 @@ fg::Error loadGltf(std::filesystem::path path,fg::Asset* asset)
     if (!std::filesystem::exists(path)) return fg::Error::InvalidPath;
 
     static constexpr auto supportedExtensions =
-        fg::Extensions::KHR_mesh_quantization |
-        fg::Extensions::KHR_texture_transform;
+    	fg::Extensions::KHR_materials_variants	|
+        fg::Extensions::KHR_mesh_quantization	|
+        fg::Extensions::KHR_texture_basisu;
 
     fg::Parser parser(supportedExtensions);
 
@@ -390,6 +394,7 @@ const GLTFModel* Manager::getModel(std::uint64_t uniqueHash,std::string_view pat
 	}
 
 	GLTFModel outModel;
+	outModel.materialVariants = std::move(asset.materialVariants);
 	outModel.images = loadImages(asset,*this,uniqueHash);
 	outModel.textures = loadTextures(asset);
 	outModel.samplers = loadSamplers(asset,*this);
@@ -402,7 +407,7 @@ const GLTFModel* Manager::getModel(std::uint64_t uniqueHash,std::string_view pat
 	// nodeIdx is needed because s doesn't tell us the index of processed node
 	// and it can't be removed, because we set child indexes inside loadNode()
 	// so parent node needs to be initialized
-	for (size_t nodeIdx{};nodeIdx < asset.nodes.size();nodeIdx++) 
+	for (std::size_t nodeIdx{};nodeIdx < asset.nodes.size();nodeIdx++) 
 	{
 		loadNode(nodeIdx, asset,outModel.nodes, vBuf,iBuf);
 	}

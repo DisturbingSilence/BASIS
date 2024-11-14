@@ -28,9 +28,9 @@ Buffer::Buffer(const void* data,std::size_t size,std::uint32_t flags,std::string
 	glNamedBufferStorage(m_id, m_size, data, flags);
 }
 
-void* Buffer::map(std::uint32_t flags) noexcept
+void* Buffer::map(AccessFlags flags) noexcept
 {
-	m_mappedMem = glMapNamedBuffer(m_id,flags);
+	m_mappedMem = glMapNamedBuffer(m_id,static_cast<std::uint32_t>(flags));
 	return m_mappedMem;
 }
 void Buffer::unmap() noexcept

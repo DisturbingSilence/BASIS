@@ -1,10 +1,13 @@
 #pragma once
 
+
 #include <BASIS/buffer.h>
+#include <BASIS/context.h>
 #include <BASIS/texture.h>
 #include <BASIS/manager.h>
 #include <BASIS/pipeline.h>
-#include <BASIS/context.h>
+#include <BASIS/framebuffer.h>
+
 
 #include <span>
 #include <cstdint>
@@ -51,7 +54,7 @@ struct Renderer
 	void drawIndirect(
 		const Buffer& cmdBuf,
 		std::uint32_t drawCount,
-		std::uint32_t stride,
+		std::uint32_t stride = 0,
 		std::uint64_t bufOffset = 0);
 					 
 	void bindUniformBuffer(
@@ -70,14 +73,14 @@ struct Renderer
 		const Buffer& commandBuffer,
 		const Buffer& countBuffer,
 		std::uint32_t maxDrawCount,
-		std::uint32_t stride,
+		std::uint32_t stride = 0,
 		std::uint64_t commandBufferOffset=0,
 		std::uint64_t countBufferOffset=0);
 
 	void drawIndexedIndirect(
 		const Buffer& commandBuffer,
 		std::uint32_t drawCount,
-		std::uint32_t stride,
+		std::uint32_t stride = 0,
 		std::uint64_t commandBufferOffset = 0);
 
 	void dispatch(const glm::vec3& groupCount);
@@ -87,7 +90,7 @@ struct Renderer
 	const Buffer& commandBuffer,
 	const Buffer& countBuffer,
 	std::uint32_t maxDrawCount,
-	std::uint32_t stride,
+	std::uint32_t stride = 0,
 	std::uint64_t commandBufferOffset = 0,
 	std::uint64_t countBufferOffset = 0);
 	
@@ -96,11 +99,23 @@ struct Renderer
 	void clearColor(float r,float g,float b,float a);
 	void clear(MaskFlags mask);
 	
+	void bindFramebuffer(const Framebuffer& fbo);
+	
+	static void bindDefaultFramebuffer();
+	static void blitFramebuffer(
+		const Framebuffer& src,
+		const Framebuffer& dst,
+		glm::ivec4 srcRect,
+		glm::ivec4 dstRect,
+		MaskFlags mask,
+		Filter filter);
+
+	//questionable
+	static bool isValidDrawFramebuffer(const Framebuffer& fb);
+	static bool isValidReadFramebuffer(const Framebuffer& fb);
+
 	static void enableCapability(Cap capability);
 	static void disableCapability(Cap capability);
-	
-	static void cullFace(CullFaceMode mode);
-	static void frontFace(FrontFaceMode mode);
 	
 	static void blendFunc(Factor src,Factor dst);
 	static void blendFuncSeparate(Factor srcRGB,Factor dstRGB,Factor srcAlpha,Factor dstAlpha);

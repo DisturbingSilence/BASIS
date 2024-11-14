@@ -139,13 +139,12 @@ enum BufferFlags : std::uint32_t
 	INVALIDATE_RANGE = 0x0004,
 	INVALIDATE_BUFFER = 0x0008,
 };
-enum class AccessFlagBit : std::uint32_t
+enum class AccessFlags : std::uint32_t
 {
 	READ_ONLY = 0x88B8,
 	WRITE_ONLY = 0x88B9,
 	READ_WRITE = 0x88BA,
 };
-BASIS_DECLARE_FLAG_TYPE(AccessFlags,AccessFlagBit,std::uint32_t);
 
 enum class MaskFlagBit : std::uint32_t
 {
@@ -155,13 +154,14 @@ enum class MaskFlagBit : std::uint32_t
 };
 BASIS_DECLARE_FLAG_TYPE(MaskFlags,MaskFlagBit,std::uint32_t);
 
-enum class CullFaceMode : std::uint32_t
+enum class CullMode : std::uint32_t
 {
+	NONE = 0,
 	BACK = 0x0405,
 	FRONT = 0x0404,
 	FRONT_AND_BACK = 0x0408
 };
-enum class FrontFaceMode : std::uint32_t
+enum class FrontFace : std::uint32_t
 {
 	CW = 0x0900,
 	CCW = 0x0901
@@ -281,7 +281,12 @@ enum class PrimitiveMode : std::uint32_t
 	TRIANGLE_FAN = 0x0006,
 	TRIANGLE_STRIP = 0x0005,
 };
-
+enum class PolygonMode : std::uint32_t
+{
+	FILL = 0x1B02,
+	LINE = 0x1B01,
+	POINT = 0x1B00
+};
 enum class ComponentSwizzle : std::uint32_t
 {
 	R = 0x1903,
@@ -559,6 +564,9 @@ template<typename T>
 requires is_any_same<T,
 					ComponentSwizzle,
 					PrimitiveMode,
+					FrontFace,
+					CullMode,
+					PolygonMode,
 					SampleCount,
 					AddressMode,
 					CompareMode,
