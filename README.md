@@ -4,7 +4,7 @@ Library for quick prototyping based on [Fwog](https://github.com/JuanDiegoMontoy
 ## TODO
  - [ ] SPIRV support
     * lacks GL_ARB_bindless_texture support as of 06.10.2024
- - [ ] Framebuffer abstraction
+ - [x] Framebuffer abstraction
  - [ ] Audio
  - [ ] Viewports and scissors
  - [ ] Async asset loading

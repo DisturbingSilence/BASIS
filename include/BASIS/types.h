@@ -72,10 +72,12 @@ consteval std::uint64_t hash_64_const(const char* const str, const std::uint64_t
 		return hash_64_const(&str[1], (value ^ std::uint64_t((std::uint8_t)str[0])) * 0x100000001b3);
 	}
 }
-
+namespace literals
+{
 consteval std::uint64_t operator""_hash(const char* str,std::size_t)
 {
 	 return hash_64_const(str);
+}
 }
 enum class FloatUniform
 {
