@@ -554,6 +554,7 @@ void saveTexture(std::string_view filePath,const Texture& tex,std::int32_t level
 	pixels);
 	
 	auto channels = formatTo(info.fmt,BITMASK::SIZE_GL);
+	using namespace literals;
 	switch(hash_64( filePath.substr(filePath.find_last_of('.')+1)))
 	{
 		case ".png"_hash:
