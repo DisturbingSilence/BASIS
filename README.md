@@ -17,7 +17,7 @@ Library for quick prototyping based on [Fwog](https://github.com/JuanDiegoMontoy
 
 ## Building
 ```
-git clone https://github.com/frog-in-a-frock-on-a-log-with-some-dog/BASIS
+git clone https://github.com/DisturbingSilence /BASIS
 cd BASIS
 cmake -B build
 ```
